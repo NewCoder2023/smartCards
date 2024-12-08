@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">smartCards</string>
+    <string name="add_new_item">Add new item</string>
+    <string name="morning_greeting">Good Morning!</string>
+    <string name="afternoon_greeting">Good Afternoon!</string>
+    <string name="evening_greeting">Good Evening!</string>
+
+</resources>
