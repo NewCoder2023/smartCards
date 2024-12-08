@@ -1,5 +1,7 @@
 package com.example.smartcards;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,9 +38,13 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.FolderView
         holder.folderNameTextView.setText(folderList.get(position));
 
         holder.itemView.setOnClickListener(v -> {
-            // Handle folder click (e.g., open folder)
+            Context context = holder.itemView.getContext();
+            Intent intent = new Intent(context, DeckActivity.class);
+            intent.putExtra("FOLDER_NAME", folderList.get(position));
+            context.startActivity(intent);
         });
     }
+
 
     @Override
     public int getItemCount() {

@@ -13,6 +13,9 @@
         android:theme="@style/Theme.SmartCards"
         tools:targetApi="31">
         <activity
+            android:name=".DeckActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
@@ -24,7 +27,7 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:label="Settings"/>
+            android:label="Settings" />
     </application>
 
 </manifest>
