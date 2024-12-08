@@ -6,6 +6,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -67,14 +68,18 @@ public class DeckActivity extends AppCompatActivity {
     private void showAddDeckDialog() {
         EditText input = new EditText(this);
         input.setHint("Enter deck name");
-        input.setPadding(32, 32, 32, 32);
+        input.setPadding(32, 32, 32, 32); // Add padding inside the input field
 
-        new androidx.appcompat.app.AlertDialog.Builder(this)
+        new AlertDialog.Builder(this)
                 .setTitle("New Deck")
                 .setView(input)
                 .setPositiveButton("Create", (dialog, which) -> {
                     String deckName = input.getText().toString().trim();
-                    if (!deckName.isEmpty() && !deckList.contains(deckName)) {
+                    if (deckName.isEmpty()) {
+                        showEmptyNameAlert(); // Show alert for empty name
+                    } else if (deckList.contains(deckName)) {
+                        showDuplicateNameAlert(); // Show alert for duplicate name
+                    } else {
                         deckList.add(deckName);
                         deckAdapter.notifyItemInserted(deckList.size() - 1);
                     }
@@ -82,4 +87,23 @@ public class DeckActivity extends AppCompatActivity {
                 .setNegativeButton("Cancel", null)
                 .show();
     }
+
+    // Alert for empty deck name
+    private void showEmptyNameAlert() {
+        new AlertDialog.Builder(this)
+                .setTitle("Invalid Name")
+                .setMessage("Deck name cannot be empty. Please enter a valid name.")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    // Alert for duplicate deck name
+    private void showDuplicateNameAlert() {
+        new AlertDialog.Builder(this)
+                .setTitle("Duplicate Name")
+                .setMessage("A deck with this name already exists. Please choose another name.")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
 }
