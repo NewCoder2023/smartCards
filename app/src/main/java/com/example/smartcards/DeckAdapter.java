@@ -21,9 +21,10 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckViewHolder
     @Override
     public DeckViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.deck_item, parent, false);
+                .inflate(R.layout.deck_item, parent, false); // Use the new deck_item.xml
         return new DeckViewHolder(view);
     }
+
 
     @Override
     public void onBindViewHolder(@NonNull DeckViewHolder holder, int position) {
