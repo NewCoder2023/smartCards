@@ -1,17 +1,17 @@
 package com.example.smartcards;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.smartcards.utils.NavigationUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.example.smartcards.utils.NavigationUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +30,14 @@ public class DeckActivity extends AppCompatActivity {
         // Get the folder name from the Intent
         folderName = getIntent().getStringExtra("FOLDER_NAME");
 
-        // Set the folder name as the title
-        TextView titleTextView = findViewById(R.id.title_text_view);
-        titleTextView.setText(folderName);
+        // Set up the custom Toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true); // Show back button
+            getSupportActionBar().setTitle(folderName); // Set the title to the folder name
+        }
 
         // Setup RecyclerView
         deckRecyclerView = findViewById(R.id.deck_recycler_view);
@@ -50,11 +55,21 @@ public class DeckActivity extends AppCompatActivity {
         NavigationUtils.setupBottomNavigation(this, bottomNavigationView);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish(); // Go back to the previous activity
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void showAddDeckDialog() {
         EditText input = new EditText(this);
         input.setHint("Enter deck name");
+        input.setPadding(32, 32, 32, 32);
 
-        new AlertDialog.Builder(this)
+        new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("New Deck")
                 .setView(input)
                 .setPositiveButton("Create", (dialog, which) -> {
