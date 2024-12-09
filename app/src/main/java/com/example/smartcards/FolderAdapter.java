@@ -66,6 +66,6 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.FolderView
         FolderViewHolder(@NonNull View itemView) {
             super(itemView);
             folderNameTextView = itemView.findViewById(R.id.folder_name_text_view);
-        }
+           }
     }
 }
