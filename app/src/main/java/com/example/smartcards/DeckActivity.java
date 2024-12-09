@@ -1,5 +1,7 @@
 package com.example.smartcards;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Button;
@@ -15,9 +17,12 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.smartcards.utils.NavigationUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DeckActivity extends AppCompatActivity {
+    private static final String PREFS_NAME = "SmartCardsPrefs";
     private RecyclerView deckRecyclerView;
     private List<String> deckList;
     private DeckAdapter deckAdapter;
@@ -36,16 +41,12 @@ public class DeckActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true); // Show back button
-            getSupportActionBar().setTitle(folderName); // Set the title to the folder name
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle(folderName);
         }
 
         // Setup RecyclerView
-        deckRecyclerView = findViewById(R.id.deck_recycler_view);
-        deckList = new ArrayList<>();
-        deckAdapter = new DeckAdapter(deckList);
-        deckRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        deckRecyclerView.setAdapter(deckAdapter);
+        setupDeckRecyclerView();
 
         // Add button logic
         Button addDeckButton = findViewById(R.id.add_deck_button);
@@ -56,10 +57,22 @@ public class DeckActivity extends AppCompatActivity {
         NavigationUtils.setupBottomNavigation(this, bottomNavigationView);
     }
 
+    private void setupDeckRecyclerView() {
+        deckRecyclerView = findViewById(R.id.deck_recycler_view);
+        deckList = new ArrayList<>();
+
+        // Load saved decks for this folder
+        loadDecks();
+
+        deckAdapter = new DeckAdapter(deckList, this::deleteDeck);
+        deckRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        deckRecyclerView.setAdapter(deckAdapter);
+    }
+
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            finish(); // Go back to the previous activity
+            finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -68,7 +81,7 @@ public class DeckActivity extends AppCompatActivity {
     private void showAddDeckDialog() {
         EditText input = new EditText(this);
         input.setHint("Enter deck name");
-        input.setPadding(32, 32, 32, 32); // Add padding inside the input field
+        input.setPadding(32, 32, 32, 32);
 
         new AlertDialog.Builder(this)
                 .setTitle("New Deck")
@@ -76,19 +89,33 @@ public class DeckActivity extends AppCompatActivity {
                 .setPositiveButton("Create", (dialog, which) -> {
                     String deckName = input.getText().toString().trim();
                     if (deckName.isEmpty()) {
-                        showEmptyNameAlert(); // Show alert for empty name
+                        showEmptyNameAlert();
                     } else if (deckList.contains(deckName)) {
-                        showDuplicateNameAlert(); // Show alert for duplicate name
+                        showDuplicateNameAlert();
                     } else {
-                        deckList.add(deckName);
-                        deckAdapter.notifyItemInserted(deckList.size() - 1);
+                        addDeck(deckName);
                     }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    // Alert for empty deck name
+    private void addDeck(String deckName) {
+        // Add to list and adapter
+        deckList.add(deckName);
+        deckAdapter.notifyItemInserted(deckList.size() - 1);
+
+        // Save to SharedPreferences
+        saveDeck(deckName);
+    }
+
+    private void deleteDeck(int position) {
+        String deletedDeck = deckList.get(position);
+        deckList.remove(position);
+        deckAdapter.notifyItemRemoved(position);
+        removeDeck(deletedDeck);
+    }
+
     private void showEmptyNameAlert() {
         new AlertDialog.Builder(this)
                 .setTitle("Invalid Name")
@@ -97,7 +124,6 @@ public class DeckActivity extends AppCompatActivity {
                 .show();
     }
 
-    // Alert for duplicate deck name
     private void showDuplicateNameAlert() {
         new AlertDialog.Builder(this)
                 .setTitle("Duplicate Name")
@@ -106,5 +132,32 @@ public class DeckActivity extends AppCompatActivity {
                 .show();
     }
 
-}
+    private void saveDeck(String deckName) {
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String key = "Decks_" + folderName;
+        Set<String> deckSet = sharedPreferences.getStringSet(key, new HashSet<>());
+        Set<String> updatedDeckSet = new HashSet<>(deckSet);
+        updatedDeckSet.add(deckName);
 
+        sharedPreferences.edit().putStringSet(key, updatedDeckSet).apply();
+    }
+
+    private void removeDeck(String deckName) {
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String key = "Decks_" + folderName;
+        Set<String> deckSet = sharedPreferences.getStringSet(key, new HashSet<>());
+        Set<String> updatedDeckSet = new HashSet<>(deckSet);
+        updatedDeckSet.remove(deckName);
+
+        sharedPreferences.edit().putStringSet(key, updatedDeckSet).apply();
+    }
+
+    private void loadDecks() {
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String key = "Decks_" + folderName;
+        Set<String> deckSet = sharedPreferences.getStringSet(key, new HashSet<>());
+
+        deckList.clear();
+        deckList.addAll(deckSet);
+    }
+}
