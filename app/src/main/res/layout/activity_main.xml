@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:orientation="vertical">
+
+    <!-- Row for Greeting Text and Plus Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical">
+
+        <!-- Greeting Text -->
+        <TextView
+            android:id="@+id/greeting_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="24sp"
+            android:textColor="?android:textColorPrimary"
+            android:textStyle="bold"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Plus Button -->
+        <Button
+            android:id="@+id/plus_button"
+            android:contentDescription="@string/add_new_item"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@android:drawable/ic_input_add" />
+    </LinearLayout>
+
+    <!-- RecyclerView for folders -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/folder_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp" />
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:menu="@menu/bottom_nav_menu"
+        android:background="?android:attr/windowBackground" />
+
+</LinearLayout>
