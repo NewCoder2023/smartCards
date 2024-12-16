@@ -3,6 +3,7 @@ package com.example.smartcards;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.Update;
 import androidx.room.Query;
 
 import java.util.List;
@@ -21,8 +22,8 @@ public interface DeckDao {
     @Query("SELECT * FROM decks WHERE folderName = :folderName")
     List<Deck> getDecksByFolderName(String folderName);
 
-
-
+    @Update
+    void update(Deck deck);
     @Delete
     void delete(Deck deck);
 }

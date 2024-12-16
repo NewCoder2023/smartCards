@@ -1,6 +1,7 @@
 package com.example.smartcards;
 
 import android.graphics.Canvas;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -75,76 +76,27 @@ public class DeckActivity extends AppCompatActivity {
         // Load decks from the database
         loadDecks();
 
-        deckAdapter = new DeckAdapter(deckList, this::deleteDeck);
+        // Initialize DeckAdapter with long-press listener
+        deckAdapter = new DeckAdapter(deckList, position -> {
+            Deck selectedDeck = deckList.get(position);
+            new android.app.AlertDialog.Builder(DeckActivity.this)
+                    .setTitle("Choose Action")
+                    .setItems(new String[]{"Edit", "Delete"}, (dialog, which) -> {
+                        if (which == 0) {
+                            // Edit folder
+                            showEditDeckDialog(selectedDeck , position);
+                        } else if (which == 1) {
+                            // Delete folder
+                            deleteDeck(position);
+                        }
+                    })
+                    .show();
+        });
+
         deckRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         deckRecyclerView.setAdapter(deckAdapter);
-
-        // Add swipe-to-delete functionality
-        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) { // Allow only LEFT swipe
-            private final Drawable deleteIcon = ContextCompat.getDrawable(DeckActivity.this, android.R.drawable.ic_delete);
-            private final ColorDrawable background = new ColorDrawable(getResources().getColor(android.R.color.darker_gray));
-
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false; // No dragging functionality needed
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getAdapterPosition();
-                Deck deletedDeck = deckList.get(position);
-
-                // Show confirmation dialog before deletion
-                new AlertDialog.Builder(DeckActivity.this)
-                        .setTitle("Delete Deck")
-                        .setMessage("Are you sure you want to delete this deck?")
-                        .setPositiveButton("Yes", (dialog, which) -> {
-                            // Remove from database
-                            deleteDeckFromDatabase(deletedDeck);
-
-                            // Remove from adapter
-                            deckList.remove(position);
-                            deckAdapter.notifyItemRemoved(position);
-
-                            // Optional: Show a toast message
-                            Toast.makeText(DeckActivity.this, "Deck deleted", Toast.LENGTH_SHORT).show();
-                        })
-                        .setNegativeButton("No", (dialog, which) -> {
-                            // Rebind the item to prevent visual deletion
-                            deckAdapter.notifyItemChanged(position);
-                        })
-                        .show();
-            }
-
-
-            @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
-                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
-                                    int actionState, boolean isCurrentlyActive) {
-                View itemView = viewHolder.itemView;
-
-                int iconMargin = (itemView.getHeight() - deleteIcon.getIntrinsicHeight()) / 2;
-
-                // Set background for left swipe
-                if (dX < 0) {
-                    background.setBounds(itemView.getRight() + (int) dX, itemView.getTop(), itemView.getRight(), itemView.getBottom());
-                    background.draw(c);
-
-                    // Set delete icon position
-                    int iconLeft = itemView.getRight() - iconMargin - deleteIcon.getIntrinsicWidth();
-                    int iconRight = itemView.getRight() - iconMargin;
-                    int iconTop = itemView.getTop() + iconMargin;
-                    int iconBottom = itemView.getBottom() - iconMargin;
-
-                    deleteIcon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
-                    deleteIcon.draw(c);
-                }
-
-                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-            }
-        }).attachToRecyclerView(deckRecyclerView);
-
     }
+
 
     private void showAddDeckDialog() {
         EditText input = new EditText(this);
@@ -170,7 +122,7 @@ public class DeckActivity extends AppCompatActivity {
 
     private void loadDecks() {
         new Thread(() -> {
-            List<Deck> decks = deckDao.getDecksByFolderName(folderName); // Fetch decks for this folder
+            List<Deck> decks = deckDao.getDecksByFolderName(folderName);
             runOnUiThread(() -> {
                 deckList.clear();
                 deckList.addAll(decks);
@@ -178,6 +130,7 @@ public class DeckActivity extends AppCompatActivity {
             });
         }).start();
     }
+
 
 
     private void addDeckToDatabase(String deckName) {
@@ -198,7 +151,6 @@ public class DeckActivity extends AppCompatActivity {
     }
 
 
-
     private void deleteDeckFromDatabase(Deck deck) {
         new Thread(() -> {
             deckDao.delete(deck);
@@ -211,12 +163,16 @@ public class DeckActivity extends AppCompatActivity {
     }
 
 
-
     private void deleteDeck(int position) {
-        Deck deletedDeck = deckList.get(position);
-        deckList.remove(position);
-        deckAdapter.notifyItemRemoved(position);
-        deleteDeckFromDatabase(deletedDeck);
+        Deck deck = deckList.get(position);
+        new Thread(() -> {
+            deckDao.delete(deck); // Delete from the database
+            runOnUiThread(() -> {
+                deckList.remove(position); // Remove from the list
+                deckAdapter.notifyItemRemoved(position); // Notify adapter
+                deckAdapter.notifyItemRangeChanged(position, deckList.size());
+            });
+        }).start();
     }
 
     private void showEmptyNameAlert() {
@@ -242,5 +198,40 @@ public class DeckActivity extends AppCompatActivity {
             }
         }
         return false;
+    }
+
+    private void updateDeckName(Deck deck, String newName, int position) {
+        new Thread(() -> {
+            deck.deckName = newName;
+            deckDao.update(deck);
+
+            runOnUiThread(() -> {
+                deckList.set(position, deck);
+                deckAdapter.notifyItemChanged(position);
+            });
+        }).start();
+    }
+
+
+    private void showEditDeckDialog(Deck deck, int position) {
+        EditText input = new EditText(this);
+        input.setText(deck.deckName);
+        input.setSelection(deck.deckName.length());
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit Deck Name")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newName = input.getText().toString().trim();
+                    if (newName.isEmpty()) {
+                        showEmptyNameAlert();
+                    } else if (deckExists(newName)) {
+                        showDuplicateNameAlert();
+                    } else {
+                        updateDeckName(deck, newName, position);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }

@@ -14,16 +14,18 @@ import java.util.List;
 
 public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckViewHolder> {
     private final List<Deck> deckList;
-    private final OnDeckDeleteListener deleteListener;
 
-    public interface OnDeckDeleteListener {
-        void onDeckDelete(int position);
+    private final OnDeckLongClickListener longClickListener;
+
+    public interface OnDeckLongClickListener {
+        void onDeckLongClick(int position);
     }
 
-    public DeckAdapter(List<Deck> deckList, OnDeckDeleteListener deleteListener) {
+    public DeckAdapter(List<Deck> deckList, OnDeckLongClickListener longClickListener) {
         this.deckList = deckList;
-        this.deleteListener = deleteListener;
+        this.longClickListener = longClickListener;
     }
+
 
     @NonNull
     @Override
@@ -46,7 +48,14 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckViewHolder
             context.startActivity(intent);
         });
 
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onDeckLongClick(position);
+            }
+            return true;
+        });
     }
+
 
     @Override
     public int getItemCount() {
