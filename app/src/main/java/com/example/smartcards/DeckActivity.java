@@ -52,7 +52,7 @@ public class DeckActivity extends AppCompatActivity {
         // Set up the custom Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle(folderName);
