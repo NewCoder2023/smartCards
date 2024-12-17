@@ -1,6 +1,7 @@
 package com.example.smartcards;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -221,8 +222,97 @@ public class CardListActivity extends AppCompatActivity {
     }
 
     private void openAICardGeneration() {
-        // Placeholder for AI card generation
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Generate Flashcards with AI")
+                .setItems(new CharSequence[]{"Take a Picture", "Upload Image", "Upload PDF"}, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            openCamera();
+                            break;
+                        case 1:
+                            openImageGallery();
+                            break;
+                        case 2:
+                            openPDFPicker();
+                            break;
+                    }
+                })
+                .show();
+    }
 
+    private void openCamera() {
+        // Implement camera intent
+        // You'll need to request camera permissions
+        Intent takePictureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+    private void openImageGallery() {
+        // Implement image gallery intent
+        Intent pickPhoto = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(pickPhoto, REQUEST_IMAGE_PICK);
+    }
+
+    private void openPDFPicker() {
+        // Implement PDF file picker
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/pdf");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(intent, REQUEST_PDF_PICK);
+    }
+
+    // You'll need to add these constants at the top of your class
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int REQUEST_IMAGE_PICK = 2;
+    private static final int REQUEST_PDF_PICK = 3;
+
+    // Add this method to handle the results
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case REQUEST_IMAGE_CAPTURE:
+                    // Handle camera image
+                    handleCameraImage(data);
+                    break;
+                case REQUEST_IMAGE_PICK:
+                    // Handle gallery image
+                    handleGalleryImage(data);
+                    break;
+                case REQUEST_PDF_PICK:
+                    // Handle PDF
+                    handlePDFFile(data);
+                    break;
+            }
+        }
+    }
+
+    private void handleCameraImage(Intent data) {
+        // Process the captured image
+        // You might want to create a CardItem with the image URI
+        Bundle extras = data.getExtras();
+        if (extras != null && extras.containsKey("data")) {
+            // TODO: Convert bitmap to URI and create CardItem
+        }
+    }
+
+    private void handleGalleryImage(Intent data) {
+        if (data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+            // TODO: Create CardItem with this URI
+        }
+    }
+
+    private void handlePDFFile(Intent data) {
+        if (data != null && data.getData() != null) {
+            Uri pdfUri = data.getData();
+            // TODO: Create CardItem with this URI
+        }
     }
 
     private void initializeUI() {
