@@ -1,8 +1,6 @@
 package com.example.smartcards;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -11,15 +9,13 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.smartcards.service.HuggingFaceService;
 import com.example.smartcards.utils.NavigationUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -35,6 +31,8 @@ import java.util.Locale;
 public class CardListActivity extends AppCompatActivity {
     private RecyclerView cardRecyclerView;
     private List<Flashcard> flashcardList;
+    private HuggingFaceService huggingFaceService;
+    private LoadingDialogManager loadingDialogManager;
     private CardAdapter cardAdapter;
     private boolean isPDFPermissionRequested = false;
 
@@ -74,6 +72,10 @@ public class CardListActivity extends AppCompatActivity {
                 }
             });
         }).start();
+
+        // Using AI
+        huggingFaceService = new HuggingFaceService(this);
+        loadingDialogManager = new LoadingDialogManager(this);
     }
 
     private void setupLaunchers() {
@@ -289,6 +291,14 @@ public class CardListActivity extends AppCompatActivity {
         pdfPickerLauncher.launch(intent);
     }
 
+    // Replace the existing showLoadingDialog and hideLoadingDialog methods with these:
+    private void showLoadingDialog() {
+        loadingDialogManager.showLoadingDialog();
+    }
+
+    private void hideLoadingDialog() {
+        loadingDialogManager.hideLoadingDialog();
+    }
     private void handleCameraImage() {
         processImageForAI(currentPhotoUri);
     }
@@ -302,11 +312,64 @@ public class CardListActivity extends AppCompatActivity {
     }
 
     private void processImageForAI(Uri fileUri) {
-        Toast.makeText(this, "Processing Image: " + fileUri, Toast.LENGTH_SHORT).show();
+        // Show loading indicator
+        showLoadingDialog();
+
+        new Thread(() -> {
+            try {
+                List<HuggingFaceService.FlashcardPair> flashcards =
+                        huggingFaceService.processImage(fileUri);
+
+                // Add flashcards to database
+                for (HuggingFaceService.FlashcardPair pair : flashcards) {
+                    addFlashcardToDatabase(pair.question, pair.answer);
+                }
+
+                runOnUiThread(() -> {
+                    hideLoadingDialog();
+                    Toast.makeText(this,
+                            "Generated " + flashcards.size() + " flashcards",
+                            Toast.LENGTH_SHORT).show();
+                });
+            } catch (IOException e) {
+                runOnUiThread(() -> {
+                    hideLoadingDialog();
+                    Toast.makeText(this,
+                            "Error generating flashcards: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
     }
 
+
     private void processPDFForAI(Uri fileUri) {
-        Toast.makeText(this, "Processing PDF: " + fileUri, Toast.LENGTH_SHORT).show();
+        showLoadingDialog();
+
+        new Thread(() -> {
+            try {
+                List<HuggingFaceService.FlashcardPair> flashcards =
+                        huggingFaceService.processPDF(fileUri);
+
+                for (HuggingFaceService.FlashcardPair pair : flashcards) {
+                    addFlashcardToDatabase(pair.question, pair.answer);
+                }
+
+                runOnUiThread(() -> {
+                    hideLoadingDialog();
+                    Toast.makeText(this,
+                            "Generated " + flashcards.size() + " flashcards",
+                            Toast.LENGTH_SHORT).show();
+                });
+            } catch (IOException e) {
+                runOnUiThread(() -> {
+                    hideLoadingDialog();
+                    Toast.makeText(this,
+                            "Error processing PDF: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
     }
 
     private void addFlashcardToDatabase(String question, String answer) {

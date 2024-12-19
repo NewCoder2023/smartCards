@@ -35,6 +35,8 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation ("androidx.room:room-runtime:2.5.2")
+    implementation ("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation ("com.itextpdf:itextg:5.5.10")
     annotationProcessor ("androidx.room:room-compiler:2.5.2")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
